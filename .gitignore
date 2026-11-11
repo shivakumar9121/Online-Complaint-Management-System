@@ -1,0 +1,87 @@
+# =========================================================================
+# OCMS - .gitignore for Python / Flask / Render
+# =========================================================================
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# SQLite Database files (prevents committing local DB and secrets)
+*.db
+*.sqlite
+*.sqlite3
+ocms.db
+
+# User Uploaded Documents & Attachments (keep .gitkeep so directory is tracked)
+static/uploads/*
+!static/uploads/.gitkeep
+
+# Environment variables, credentials, and local secrets
+.env
+.env.*
+*.key
+*.pem
+*.secret
+
+# Virtual Environments
+venv/
+.venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Distribution / Packaging
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+
+# IDE & Editor Specific Files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+*.swp
+*.swo
+
+# OS Generated Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# Log files
+*.log

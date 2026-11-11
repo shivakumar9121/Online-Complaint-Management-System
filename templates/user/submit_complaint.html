@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+
+{% block title %}Lodge Complaint{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+    <div>
+        <h2 class="page-title"><i class="bi bi-pencil-square me-2 text-primary"></i>Lodge a Complaint</h2>
+        <p class="page-subtitle">Submit a maintenance, technical or facility request to the administration</p>
+    </div>
+    <div>
+        <a href="{{ url_for('user_complaints') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i> Back to My Complaints
+        </a>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="card p-4">
+            <form method="POST" action="{{ url_for('submit_complaint') }}" enctype="multipart/form-data">
+                <div class="mb-3">
+                    <label for="title" class="form-label">Complaint Title / Summary <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="title" name="title" placeholder="Brief summary (e.g. Wi-Fi router rebooting constantly on 2nd floor)" required>
+                    <div class="form-text">State the issue clearly in one concise sentence.</div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label for="category_id" class="form-label">Category / Department <span class="text-danger">*</span></label>
+                        <select class="form-select" id="category_id" name="category_id" required>
+                            <option value="" disabled selected>-- Select Issue Category --</option>
+                            {% for cat in all_categories %}
+                                <option value="{{ cat.id }}">{{ cat.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="priority" class="form-label">Priority Level <span class="text-danger">*</span></label>
+                        <select class="form-select" id="priority" name="priority" required>
+                            <option value="Low">Low (General suggestion / minor cosmetic issue)</option>
+                            <option value="Medium" selected>Medium (Standard issue affecting normal work)</option>
+                            <option value="High">High (Impacting classes, labs or room stay)</option>
+                            <option value="Urgent">Urgent (Safety hazard, major water/power outage)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="location" class="form-label">Exact Campus Location <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="location" name="location" placeholder="e.g. Hostel Block-B Room 304, or Academic Block Lab-2" required>
+                    <div class="form-text">Provide specific room number, floor, or lab to help staff pinpoint the location quickly.</div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="description" class="form-label">Detailed Description <span class="text-danger">*</span></label>
+                    <textarea class="form-control" id="description" name="description" rows="5" placeholder="Describe the problem, when it started occurring, what equipment is affected, and any steps already attempted..." required></textarea>
+                </div>
+
+                <div class="mb-4">
+                    <label for="attachment" class="form-label">Supporting Photo / Document <span class="text-secondary">(Optional)</span></label>
+                    <input class="form-control" type="file" id="attachment" name="attachment" accept=".png,.jpg,.jpeg,.gif,.pdf,.doc,.docx,.txt">
+                    <div class="form-text">Allowed formats: PNG, JPG, JPEG, PDF, DOCX (Max 16MB).</div>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2 pt-2 border-top">
+                    <a href="{{ url_for('user_dashboard') }}" class="btn btn-outline-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-primary px-4">
+                        <i class="bi bi-send-fill me-1"></i> Submit Complaint Ticket
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Right Information Sidebar -->
+    <div class="col-lg-4">
+        <div class="card p-4 mb-3">
+            <h6 class="fw-bold mb-3"><i class="bi bi-info-circle-fill text-primary me-2"></i>Submission Guidelines</h6>
+            <ul class="text-secondary small ps-3 mb-0">
+                <li class="mb-2"><strong>Unique Complaint ID:</strong> A tracking reference (e.g. <code>CMP-202611-XXXX</code>) is automatically generated.</li>
+                <li class="mb-2"><strong>Notification & Review:</strong> Central administration receives your ticket and assigns it to appropriate staff.</li>
+                <li class="mb-2"><strong>Real-time Logs:</strong> Check every progress update, technician remark, and completion status on the ticket detail page.</li>
+                <li><strong>Resolution Rating:</strong> After the work is finished, you can rate the staff's service.</li>
+            </ul>
+        </div>
+
+        <div class="card p-4 bg-light border-dashed">
+            <h6 class="fw-bold mb-2"><i class="bi bi-telephone-outbound text-danger me-2"></i>Campus Emergency Contacts</h6>
+            <div class="small text-secondary">
+                <div class="mb-1"><i class="bi bi-dot"></i> Security Main Gate: <strong>Ext. 100</strong></div>
+                <div class="mb-1"><i class="bi bi-dot"></i> Medical Dispensary: <strong>Ext. 108</strong></div>
+                <div><i class="bi bi-dot"></i> Electrical Substation: <strong>Ext. 115</strong></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

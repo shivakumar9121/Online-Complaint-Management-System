@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+
+{% block title %}User & Staff Management - OCMS{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+    <div>
+        <h2 class="page-title"><i class="bi bi-people-fill me-2 text-primary"></i>User & Staff Management</h2>
+        <p class="page-subtitle">Manage campus accounts, permissions, and technical staff roster</p>
+    </div>
+    <div>
+        <button type="button" class="btn btn-primary d-inline-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#addStaffModal">
+            <i class="bi bi-person-plus-fill"></i> Add Technical Staff Member
+        </button>
+    </div>
+</div>
+
+<!-- Filter Bar -->
+<div class="card p-3 mb-4">
+    <form method="GET" action="{{ url_for('admin_users') }}" class="row g-2 align-items-center">
+        <div class="col-md-6">
+            <div class="input-group">
+                <span class="input-group-text bg-white"><i class="bi bi-search text-secondary"></i></span>
+                <input type="text" class="form-control" name="search" value="{{ search or '' }}" placeholder="Search by name, email, roll number, or department...">
+            </div>
+        </div>
+        <div class="col-md-4">
+            <select class="form-select" name="role">
+                <option value="">All Roles (Students, Staff, Admins)</option>
+                <option value="user" {% if selected_role == 'user' %}selected{% endif %}>Students / Users</option>
+                <option value="staff" {% if selected_role == 'staff' %}selected{% endif %}>Technical Staff</option>
+                <option value="admin" {% if selected_role == 'admin' %}selected{% endif %}>Administrators</option>
+            </select>
+        </div>
+        <div class="col-md-2 d-flex gap-1">
+            <button type="submit" class="btn btn-primary w-100">Filter</button>
+            {% if search or selected_role %}
+                <a href="{{ url_for('admin_users') }}" class="btn btn-outline-secondary" title="Reset Filters"><i class="bi bi-x-lg"></i></a>
+            {% endif %}
+        </div>
+    </form>
+</div>
+
+<!-- Users Table -->
+<div class="card">
+    <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+        <h6 class="fw-bold mb-0">Total Accounts: <span class="badge bg-primary">{{ users | length }}</span></h6>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-custom align-middle">
+            <thead>
+                <tr>
+                    <th>User</th>
+                    <th>Role</th>
+                    <th>Roll / Staff ID</th>
+                    <th>Department</th>
+                    <th>Phone</th>
+                    <th>Status</th>
+                    <th>Registered</th>
+                    <th class="text-end">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for u in users %}
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="sidebar-user-avatar" style="width: 34px; height: 34px; font-size: 0.85rem;">
+                                    {{ u.name[0] | upper }}
+                                </div>
+                                <div>
+                                    <div class="fw-semibold">{{ u.name }}</div>
+                                    <small class="text-muted">{{ u.email }}</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge {% if u.role == 'admin' %}bg-danger{% elif u.role == 'staff' %}bg-info text-dark{% else %}bg-primary{% endif %}">
+                                {{ u.role | upper }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="font-monospace small">{{ u.roll_number or '—' }}</span>
+                        </td>
+                        <td>{{ u.department or '—' }}</td>
+                        <td>{{ u.phone or '—' }}</td>
+                        <td>
+                            {% if u.is_active %}
+                                <span class="badge bg-success-subtle text-success border border-success-subtle">Active</span>
+                            {% else %}
+                                <span class="badge bg-danger-subtle text-danger border border-danger-subtle">Suspended</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <small class="text-muted">{{ u.created_at.strftime('%b %d, %Y') }}</small>
+                        </td>
+                        <td class="text-end">
+                            {% if u.id != current_user.id %}
+                                <form method="POST" action="{{ url_for('admin_toggle_user_status', user_id=u.id) }}" class="d-inline">
+                                    <button type="submit" class="btn btn-sm {% if u.is_active %}btn-outline-danger{% else %}btn-outline-success{% endif %}" title="Toggle account status">
+                                        {% if u.is_active %}
+                                            <i class="bi bi-slash-circle me-1"></i> Deactivate
+                                        {% else %}
+                                            <i class="bi bi-check-circle me-1"></i> Activate
+                                        {% endif %}
+                                    </button>
+                                </form>
+                            {% else %}
+                                <span class="badge bg-secondary">Current Account</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal: Add New Staff Member -->
+<div class="modal fade" id="addStaffModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('admin_create_staff') }}">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold"><i class="bi bi-person-plus-fill me-2 text-primary"></i>Register Technical Staff Member</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Full Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="name" name="name" placeholder="e.g. Anand Kumar" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email Address <span class="text-danger">*</span></label>
+                        <input type="email" class="form-control" id="email" name="email" placeholder="e.g. staff.anand@iiitv.ac.in" required>
+                    </div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-md-6">
+                            <label for="staff_id" class="form-label">Staff Employee ID</label>
+                            <input type="text" class="form-control" id="staff_id" name="staff_id" placeholder="EMP-STAFF-104">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="phone" class="form-label">Phone Number</label>
+                            <input type="tel" class="form-control" id="phone" name="phone" placeholder="+91 9876543210">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="department" class="form-label">Department / Specialization <span class="text-danger">*</span></label>
+                        <select class="form-select" id="department" name="department" required>
+                            <option value="IT & Wi-Fi Services" selected>IT & Wi-Fi Services</option>
+                            <option value="Hostel & Infrastructure">Hostel & Infrastructure</option>
+                            <option value="Mess & Sanitation">Mess & Sanitation</option>
+                            <option value="Electrical & Power Maintenance">Electrical & Power Maintenance</option>
+                            <option value="Academic Support & Labs">Academic Support & Labs</option>
+                            <option value="General Maintenance">General Maintenance</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Initial Password <span class="text-danger">*</span></label>
+                        <input type="password" class="form-control" id="password" name="password" placeholder="Min 6 characters" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create Staff Account</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

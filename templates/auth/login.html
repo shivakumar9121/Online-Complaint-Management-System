@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In - Online Complaint Management System (OCMS)</title>
+    <!-- Bootstrap 5.3 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="bg-light">
+    <div class="auth-wrapper">
+        <!-- Left Hero Section with Academic Project Details -->
+        <div class="auth-hero">
+            <div>
+                <div class="d-flex align-items-center gap-2 mb-3">
+                    <span class="badge bg-primary text-white px-2 py-1 fs-6"><i class="bi bi-shield-check"></i> OCMS</span>
+                    <span class="badge bg-light text-dark px-2 py-1">Problem 28</span>
+                    <span class="badge bg-light text-dark px-2 py-1">Group 37</span>
+                </div>
+                <h1 class="display-6 fw-bold text-white mb-2">Online Complaint<br>Management System</h1>
+                <p class="text-white-50 fs-6 mb-4">
+                    Software Project Management Submission • IIIT Vadodara
+                </p>
+
+                <!-- Project Workflow Summary -->
+                <div class="card bg-white bg-opacity-10 border-0 p-3 rounded-3 mb-4 backdrop-blur">
+                    <h6 class="text-white fw-bold mb-2"><i class="bi bi-diagram-3 me-2"></i>Automated Complaint Lifecycle</h6>
+                    <div class="d-flex flex-column gap-2 text-white-50 small">
+                        <div><i class="bi bi-1-circle-fill text-info me-2"></i><strong>Submission:</strong> Student lodges complaint with category & priority.</div>
+                        <div><i class="bi bi-2-circle-fill text-info me-2"></i><strong>Admin Oversight:</strong> Review ticket & assign to designated department staff.</div>
+                        <div><i class="bi bi-3-circle-fill text-info me-2"></i><strong>Staff Action:</strong> Update progress & provide on-site resolution remarks.</div>
+                        <div><i class="bi bi-4-circle-fill text-info me-2"></i><strong>Resolution:</strong> Student tracks live timeline & submits feedback rating.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Team Members Credit (2x2 Grid) -->
+            <div class="border-top border-white border-opacity-10 pt-3">
+                <div class="text-white fw-semibold small mb-2 d-flex align-items-center gap-2">
+                    <i class="bi bi-people-fill text-info"></i> Project Team (Group 37)
+                </div>
+                <div class="row g-2">
+                    <div class="col-6">
+                        <div class="p-2 rounded-2 bg-white bg-opacity-10 border border-white border-opacity-10 h-100">
+                            <div class="text-white fw-semibold small">Pathlavath Shiva Kumar</div>
+                            <div class="text-white-50" style="font-size: 0.75rem;">Roll No: 202351099</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="p-2 rounded-2 bg-white bg-opacity-10 border border-white border-opacity-10 h-100">
+                            <div class="text-white fw-semibold small">Gugulothu Ganesh</div>
+                            <div class="text-white-50" style="font-size: 0.75rem;">Roll No: 202351042</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="p-2 rounded-2 bg-white bg-opacity-10 border border-white border-opacity-10 h-100">
+                            <div class="text-white fw-semibold small">Spandana Vanam</div>
+                            <div class="text-white-50" style="font-size: 0.75rem;">Roll No: 202351139</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="p-2 rounded-2 bg-white bg-opacity-10 border border-white border-opacity-10 h-100">
+                            <div class="text-white fw-semibold small">Jay Banoth</div>
+                            <div class="text-white-50" style="font-size: 0.75rem;">Roll No: 202351170</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Form Section -->
+        <div class="auth-form-container">
+            <div class="mb-4">
+                <h3 class="fw-bold mb-1">Welcome back</h3>
+                <p class="text-secondary small">Sign in to your account to manage or lodge complaints</p>
+            </div>
+
+            <!-- Flash alerts -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} alert-dismissible fade show small py-2 px-3 mb-3" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <!-- Login Form -->
+            <form method="POST" action="{{ url_for('login') }}">
+                <div class="mb-3">
+                    <label for="email" class="form-label">Email Address</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light border-end-0"><i class="bi bi-envelope text-secondary"></i></span>
+                        <input type="email" class="form-control border-start-0" id="email" name="email" value="{{ email or '' }}" placeholder="username@iiitv.ac.in" required autofocus>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between">
+                        <label for="password" class="form-label">Password</label>
+                    </div>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light border-end-0"><i class="bi bi-lock text-secondary"></i></span>
+                        <input type="password" class="form-control border-start-0" id="password" name="password" placeholder="Enter your password" required>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="remember" name="remember" checked>
+                        <label class="form-check-label small text-secondary" for="remember">Keep me logged in</label>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100 py-2 mb-3">
+                    <i class="bi bi-box-arrow-in-right me-1"></i> Sign In to Portal
+                </button>
+            </form>
+
+            <!-- 1-Click Demo Logins for Quick Testing -->
+            <div class="demo-accounts-card mt-2 mb-4">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="small fw-bold text-dark"><i class="bi bi-lightning-charge-fill text-warning me-1"></i> Quick Demo Logins:</span>
+                    <span class="badge bg-secondary" style="font-size: 0.65rem;">Click to Autofill</span>
+                </div>
+                <div class="row g-2">
+                    <div class="col-6">
+                        <div class="demo-btn demo-login-fill" data-email="admin@iiitv.ac.in" data-password="admin123">
+                            <span class="badge bg-danger mb-1">Admin</span>
+                            <div class="fw-semibold text-truncate small">Dr. Karan Verma</div>
+                            <div class="text-muted" style="font-size: 0.7rem;">admin@iiitv.ac.in</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="demo-btn demo-login-fill" data-email="staff.sharma@iiitv.ac.in" data-password="staff123">
+                            <span class="badge bg-info text-dark mb-1">Staff (IT)</span>
+                            <div class="fw-semibold text-truncate small">Vikas Sharma</div>
+                            <div class="text-muted" style="font-size: 0.7rem;">staff.sharma@iiitv.ac.in</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="demo-btn demo-login-fill" data-email="staff.verma@iiitv.ac.in" data-password="staff123">
+                            <span class="badge bg-info text-dark mb-1">Staff (Hostel)</span>
+                            <div class="fw-semibold text-truncate small">Ramesh Verma</div>
+                            <div class="text-muted" style="font-size: 0.7rem;">staff.verma@iiitv.ac.in</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="demo-btn demo-login-fill" data-email="student1@iiitv.ac.in" data-password="student123">
+                            <span class="badge bg-primary mb-1">Student</span>
+                            <div class="fw-semibold text-truncate small">Pathlavath Shiva</div>
+                            <div class="text-muted" style="font-size: 0.7rem;">student1@iiitv.ac.in</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center small text-secondary">
+                Don't have an account yet? 
+                <a href="{{ url_for('register') }}" class="fw-semibold text-primary text-decoration-none">Register as Student</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,422 @@
+{% extends "base.html" %}
+
+{% block title %}Complaint {{ complaint.complaint_id }}{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+    <div>
+        <div class="d-flex align-items-center gap-2 mb-1">
+            <span class="badge bg-light text-dark border font-monospace fs-6">{{ complaint.complaint_id }}</span>
+            <span class="badge {{ complaint.status_badge_class }}">{{ complaint.status }}</span>
+            <span class="badge {{ complaint.priority_badge_class }}">{{ complaint.priority }} Priority</span>
+        </div>
+        <h2 class="page-title">{{ complaint.title }}</h2>
+        <p class="page-subtitle">
+            <i class="bi bi-clock me-1"></i> Logged on {{ complaint.created_at.strftime('%B %d, %Y at %I:%M %p') }}
+            • <i class="bi bi-geo-alt me-1"></i> {{ complaint.location }}
+        </p>
+    </div>
+
+    <!-- Role-Based Action Header Buttons -->
+    <div class="d-flex gap-2 flex-wrap">
+        {% if current_user.role == 'admin' %}
+            <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#assignStaffModal">
+                <i class="bi bi-person-plus-fill me-1"></i> {% if complaint.assigned_staff %}Reassign Staff{% else %}Assign Staff{% endif %}
+            </button>
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#updateStatusModal">
+                <i class="bi bi-arrow-repeat me-1"></i> Change Status
+            </button>
+        {% elif current_user.role == 'staff' and complaint.assigned_staff_id == current_user.id %}
+            {% if complaint.status != 'Resolved' %}
+                <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#staffProgressModal">
+                    <i class="bi bi-pencil me-1"></i> Update Progress
+                </button>
+                <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#staffResolveModal">
+                    <i class="bi bi-check2-circle me-1"></i> Mark as Resolved
+                </button>
+            {% endif %}
+        {% endif %}
+
+        {% if current_user.role == 'user' %}
+            <a href="{{ url_for('user_complaints') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i> Back
+            </a>
+        {% elif current_user.role == 'staff' %}
+            <a href="{{ url_for('staff_complaints') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i> Back
+            </a>
+        {% else %}
+            <a href="{{ url_for('admin_complaints') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i> Back
+            </a>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Lifecycle Stepper Indicator -->
+<div class="card p-4 mb-4">
+    <div class="workflow-steps mb-0">
+        <div class="workflow-step {% if complaint.status in ['Pending', 'Assigned', 'In Progress', 'Resolved'] %}completed{% endif %}">
+            <div class="step-icon"><i class="bi bi-check-lg"></i></div>
+            <div class="step-label">1. Lodged</div>
+            <div class="text-secondary small">{{ complaint.created_at.strftime('%b %d') }}</div>
+        </div>
+        <div class="workflow-step {% if complaint.status in ['Assigned', 'In Progress', 'Resolved'] %}completed{% elif complaint.status == 'Pending' %}active{% endif %}">
+            <div class="step-icon">
+                {% if complaint.status in ['Assigned', 'In Progress', 'Resolved'] %}<i class="bi bi-check-lg"></i>{% else %}2{% endif %}
+            </div>
+            <div class="step-label">2. Admin Review</div>
+            <div class="text-secondary small">{% if complaint.assigned_staff %}Assigned{% else %}Pending{% endif %}</div>
+        </div>
+        <div class="workflow-step {% if complaint.status == 'Resolved' %}completed{% elif complaint.status == 'In Progress' %}active{% else %}{% endif %}">
+            <div class="step-icon">
+                {% if complaint.status == 'Resolved' %}<i class="bi bi-check-lg"></i>{% else %}3{% endif %}
+            </div>
+            <div class="step-label">3. In Progress</div>
+            <div class="text-secondary small">Staff action</div>
+        </div>
+        <div class="workflow-step {% if complaint.status == 'Resolved' %}completed{% endif %}">
+            <div class="step-icon">
+                {% if complaint.status == 'Resolved' %}<i class="bi bi-check-all"></i>{% else %}4{% endif %}
+            </div>
+            <div class="step-label">4. Resolved</div>
+            <div class="text-secondary small">{% if complaint.resolved_at %}{{ complaint.resolved_at.strftime('%b %d') }}{% else %}Pending{% endif %}</div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Left Column: Details & Timeline -->
+    <div class="col-lg-8">
+        <!-- Ticket Description Card -->
+        <div class="card p-4 mb-4">
+            <h5 class="fw-bold mb-3"><i class="bi bi-file-text me-2 text-primary"></i>Problem Description</h5>
+            <div class="p-3 bg-light rounded-3 text-secondary mb-3" style="white-space: pre-line; line-height: 1.6;">
+                {{ complaint.description }}
+            </div>
+
+            {% if complaint.attachment %}
+                <div class="border rounded-3 p-3 d-flex align-items-center justify-content-between bg-white">
+                    <div class="d-flex align-items-center gap-3">
+                        <i class="bi bi-paperclip fs-4 text-primary"></i>
+                        <div>
+                            <div class="fw-semibold small">Attached File</div>
+                            <div class="text-muted" style="font-size: 0.75rem;">{{ complaint.attachment }}</div>
+                        </div>
+                    </div>
+                    <a href="{{ url_for('static', filename='uploads/' + complaint.attachment) }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-box-arrow-up-right me-1"></i> View Attachment
+                    </a>
+                </div>
+            {% endif %}
+
+            <!-- Resolution Section (if resolved) -->
+            {% if complaint.status == 'Resolved' and complaint.resolution_remarks %}
+                <div class="mt-4 p-3 border-start border-4 border-success bg-light rounded-3">
+                    <h6 class="fw-bold text-success mb-1"><i class="bi bi-patch-check-fill me-1"></i>Official Resolution Remarks</h6>
+                    <p class="text-secondary small mb-1">{{ complaint.resolution_remarks }}</p>
+                    <small class="text-muted"><i class="bi bi-calendar-check"></i> Resolved at: {{ complaint.resolved_at.strftime('%B %d, %Y at %I:%M %p') if complaint.resolved_at else 'Recorded' }}</small>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Student Feedback Section -->
+        {% if complaint.status == 'Resolved' %}
+            <div class="card p-4 mb-4">
+                <h5 class="fw-bold mb-2"><i class="bi bi-star-fill text-warning me-2"></i>Student Satisfaction & Feedback</h5>
+                
+                {% if complaint.user_rating %}
+                    <div class="p-3 bg-light rounded-3">
+                        <div class="mb-2">
+                            <span class="text-secondary small d-block">Rating Given:</span>
+                            {% for i in range(1, 6) %}
+                                <i class="bi {% if i <= complaint.user_rating %}bi-star-fill text-warning{% else %}bi-star text-secondary{% endif %} fs-5"></i>
+                            {% endfor %}
+                            <span class="fw-bold ms-2">{{ complaint.user_rating }} / 5 Stars</span>
+                        </div>
+                        {% if complaint.user_feedback %}
+                            <div class="text-secondary small">
+                                <strong>Feedback Comments:</strong> "{{ complaint.user_feedback }}"
+                            </div>
+                        {% endif %}
+                    </div>
+                {% elif current_user.role == 'user' and complaint.user_id == current_user.id %}
+                    <p class="text-secondary small mb-3">This issue has been resolved. Please share your feedback to help us maintain service quality.</p>
+                    <form method="POST" action="{{ url_for('submit_feedback', complaint_id=complaint.complaint_id) }}">
+                        <div class="mb-3">
+                            <label class="form-label small">Your Rating</label>
+                            <div class="star-rating-select d-flex align-items-center gap-2 cursor-pointer">
+                                <input type="hidden" name="rating" value="5" required>
+                                <i class="bi bi-star-fill text-warning fs-3 star-icon"></i>
+                                <i class="bi bi-star-fill text-warning fs-3 star-icon"></i>
+                                <i class="bi bi-star-fill text-warning fs-3 star-icon"></i>
+                                <i class="bi bi-star-fill text-warning fs-3 star-icon"></i>
+                                <i class="bi bi-star-fill text-warning fs-3 star-icon"></i>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="feedback" class="form-label small">Feedback Comments (Optional)</label>
+                            <textarea class="form-control" id="feedback" name="feedback" rows="2" placeholder="Was the issue resolved properly? Any further suggestions?"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-sm btn-primary">
+                            <i class="bi bi-send me-1"></i> Submit Feedback
+                        </button>
+                    </form>
+                {% else %}
+                    <p class="text-secondary small mb-0 fst-italic">Awaiting feedback from the student.</p>
+                {% endif %}
+            </div>
+        {% endif %}
+
+        <!-- Timeline Log of Actions -->
+        <div class="card p-4">
+            <h5 class="fw-bold mb-3"><i class="bi bi-clock-history me-2 text-primary"></i>Status Timeline & Audit Log</h5>
+            
+            <div class="timeline">
+                {% for item in complaint.timeline %}
+                    <div class="timeline-item">
+                        <div class="timeline-marker {% if item.status == 'Resolved' %}resolved{% elif item.status == 'In Progress' %}progress{% elif item.status == 'Assigned' %}assigned{% endif %}"></div>
+                        <div class="timeline-content">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <strong class="text-dark">{{ item.action }}</strong>
+                                <span class="badge {{ item.status_badge_class }}" style="font-size: 0.7rem;">{{ item.status }}</span>
+                            </div>
+                            <div class="text-secondary small mb-1">{{ item.remarks }}</div>
+                            <div class="d-flex justify-content-between align-items-center text-muted" style="font-size: 0.725rem;">
+                                <span><i class="bi bi-person me-1"></i>{{ item.updater.name }} ({{ item.updater.role | capitalize }})</span>
+                                <span>{{ item.created_at.strftime('%b %d, %Y - %I:%M %p') }}</span>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Meta Information Cards -->
+    <div class="col-lg-4">
+        <!-- Submitter Details Card -->
+        <div class="card p-4 mb-4">
+            <h6 class="fw-bold mb-3"><i class="bi bi-person-badge text-primary me-2"></i>Complainant Details</h6>
+            <div class="d-flex align-items-center gap-3 mb-3">
+                <div class="sidebar-user-avatar" style="width: 44px; height: 44px;">
+                    {{ complaint.submitter.name[0] | upper }}
+                </div>
+                <div>
+                    <div class="fw-bold">{{ complaint.submitter.name }}</div>
+                    <div class="text-secondary small">{{ complaint.submitter.email }}</div>
+                </div>
+            </div>
+            <div class="small text-secondary">
+                <div class="mb-2"><strong>Roll / ID:</strong> {{ complaint.submitter.roll_number or 'N/A' }}</div>
+                <div class="mb-2"><strong>Department:</strong> {{ complaint.submitter.department or 'N/A' }}</div>
+                <div><strong>Contact:</strong> {{ complaint.submitter.phone or 'N/A' }}</div>
+            </div>
+        </div>
+
+        <!-- Assigned Staff Details Card -->
+        <div class="card p-4 mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="fw-bold mb-0"><i class="bi bi-tools text-primary me-2"></i>Assigned Staff</h6>
+                {% if current_user.role == 'admin' %}
+                    <button class="btn btn-sm btn-link p-0 text-decoration-none" data-bs-toggle="modal" data-bs-target="#assignStaffModal">
+                        Change
+                    </button>
+                {% endif %}
+            </div>
+
+            {% if complaint.assigned_staff %}
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <div class="sidebar-user-avatar bg-info text-dark" style="width: 44px; height: 44px;">
+                        {{ complaint.assigned_staff.name[0] | upper }}
+                    </div>
+                    <div>
+                        <div class="fw-bold">{{ complaint.assigned_staff.name }}</div>
+                        <div class="text-secondary small">{{ complaint.assigned_staff.department }}</div>
+                    </div>
+                </div>
+                <div class="small text-secondary">
+                    <div class="mb-1"><strong>Staff Email:</strong> {{ complaint.assigned_staff.email }}</div>
+                    <div><strong>Phone:</strong> {{ complaint.assigned_staff.phone or 'N/A' }}</div>
+                </div>
+            {% else %}
+                <div class="text-center py-3 text-secondary">
+                    <i class="bi bi-person-x fs-2 text-muted d-block mb-1"></i>
+                    <p class="small mb-2">No staff has been assigned yet.</p>
+                    {% if current_user.role == 'admin' %}
+                        <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#assignStaffModal">
+                            Assign Technical Staff
+                        </button>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Metadata Summary Card -->
+        <div class="card p-4">
+            <h6 class="fw-bold mb-3"><i class="bi bi-info-square text-primary me-2"></i>Ticket Metadata</h6>
+            <div class="small text-secondary">
+                <div class="d-flex justify-content-between py-2 border-bottom">
+                    <span>Category:</span>
+                    <strong class="text-dark"><i class="bi {{ complaint.category.icon }} me-1"></i> {{ complaint.category.name }}</strong>
+                </div>
+                <div class="d-flex justify-content-between py-2 border-bottom">
+                    <span>Priority:</span>
+                    <span class="badge {{ complaint.priority_badge_class }}">{{ complaint.priority }}</span>
+                </div>
+                <div class="d-flex justify-content-between py-2 border-bottom">
+                    <span>Current Status:</span>
+                    <span class="badge {{ complaint.status_badge_class }}">{{ complaint.status }}</span>
+                </div>
+                <div class="d-flex justify-content-between py-2 border-bottom">
+                    <span>Created At:</span>
+                    <span>{{ complaint.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+                </div>
+                <div class="d-flex justify-content-between py-2">
+                    <span>Last Updated:</span>
+                    <span>{{ complaint.updated_at.strftime('%Y-%m-%d %H:%M') }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- =========================================================================
+     MODALS FOR ADMIN & STAFF ACTIONS
+     ========================================================================= -->
+
+<!-- Modal: Assign Staff (Admin) -->
+{% if current_user.role == 'admin' %}
+<div class="modal fade" id="assignStaffModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('admin_assign_complaint', complaint_id=complaint.complaint_id) }}">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold"><i class="bi bi-person-plus-fill me-2 text-primary"></i>Assign Staff Member</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="staff_id" class="form-label">Select Staff</label>
+                        <select class="form-select" id="staff_id" name="staff_id" required>
+                            <option value="" disabled selected>-- Choose Available Staff --</option>
+                            {% for s in staff_members %}
+                                <option value="{{ s.id }}" {% if complaint.assigned_staff_id == s.id %}selected{% endif %}>
+                                    {{ s.name }} ({{ s.department }})
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="admin_remarks" class="form-label">Instructions / Remarks for Staff (Optional)</label>
+                        <textarea class="form-control" id="admin_remarks" name="remarks" rows="3" placeholder="e.g. Please check switch port and report by 4 PM."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Confirm Assignment</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Update Status (Admin) -->
+<div class="modal fade" id="updateStatusModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('admin_update_status', complaint_id=complaint.complaint_id) }}">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold"><i class="bi bi-arrow-repeat me-2 text-primary"></i>Update Status & Priority</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="new_status" class="form-label">Ticket Status</label>
+                        <select class="form-select" id="new_status" name="status" required>
+                            <option value="Pending" {% if complaint.status == 'Pending' %}selected{% endif %}>Pending</option>
+                            <option value="Assigned" {% if complaint.status == 'Assigned' %}selected{% endif %}>Assigned</option>
+                            <option value="In Progress" {% if complaint.status == 'In Progress' %}selected{% endif %}>In Progress</option>
+                            <option value="Resolved" {% if complaint.status == 'Resolved' %}selected{% endif %}>Resolved</option>
+                            <option value="Rejected" {% if complaint.status == 'Rejected' %}selected{% endif %}>Rejected</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="new_priority" class="form-label">Priority Level</label>
+                        <select class="form-select" id="new_priority" name="priority">
+                            <option value="Low" {% if complaint.priority == 'Low' %}selected{% endif %}>Low</option>
+                            <option value="Medium" {% if complaint.priority == 'Medium' %}selected{% endif %}>Medium</option>
+                            <option value="High" {% if complaint.priority == 'High' %}selected{% endif %}>High</option>
+                            <option value="Urgent" {% if complaint.priority == 'Urgent' %}selected{% endif %}>Urgent</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="status_remarks" class="form-label">Administrative Log Remarks</label>
+                        <textarea class="form-control" id="status_remarks" name="remarks" rows="3" placeholder="Provide reason or audit note for status change..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Modal: Staff Progress Update -->
+{% if current_user.role == 'staff' and complaint.assigned_staff_id == current_user.id %}
+<div class="modal fade" id="staffProgressModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('staff_update_progress', complaint_id=complaint.complaint_id) }}">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold"><i class="bi bi-pencil-square me-2 text-primary"></i>Post Progress Update</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-secondary small">This log will be visible to both the student and the administrator. Status will be marked as <strong>In Progress</strong>.</p>
+                    <div class="mb-3">
+                        <label for="progress_remarks" class="form-label">Action Taken / Current Work Note <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="progress_remarks" name="remarks" rows="4" placeholder="e.g. Visited Room 304, inspected the router cables, replacement adapter ordered from store..." required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Update</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Staff Mark as Resolved -->
+<div class="modal fade" id="staffResolveModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('staff_resolve_complaint', complaint_id=complaint.complaint_id) }}">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold text-success"><i class="bi bi-check2-circle me-2"></i>Resolve Complaint</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-success small mb-3">
+                        <i class="bi bi-info-circle me-1"></i> Marking this ticket as resolved will notify the student and prompt them for satisfaction rating.
+                    </div>
+                    <div class="mb-3">
+                        <label for="resolution_notes" class="form-label">Resolution Details & Actions Performed <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="resolution_notes" name="resolution_notes" rows="4" placeholder="Detail how the problem was resolved (e.g. Replaced faulty RJ45 socket, rebooted access point, verified internet bandwidth with student)..." required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success">Mark as Resolved</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}

@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block title %}Access Denied (403){% endblock %}
+
+{% block content %}
+<div class="text-center py-5">
+    <div class="display-1 fw-bold text-danger mb-2">403</div>
+    <h3 class="fw-bold mb-2">Access Forbidden</h3>
+    <p class="text-secondary mb-4">You do not have permission to access this resource or administrative role.</p>
+    <a href="{{ url_for('dashboard') }}" class="btn btn-primary">
+        <i class="bi bi-house-door-fill me-1"></i> Return to Dashboard
+    </a>
+</div>
+{% endblock %}

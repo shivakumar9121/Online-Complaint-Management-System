@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block title %}Server Error (500){% endblock %}
+
+{% block content %}
+<div class="text-center py-5">
+    <div class="display-1 fw-bold text-warning mb-2">500</div>
+    <h3 class="fw-bold mb-2">Internal Server Error</h3>
+    <p class="text-secondary mb-4">Something went wrong while processing your request. Please try again.</p>
+    <a href="{{ url_for('dashboard') }}" class="btn btn-primary">
+        <i class="bi bi-arrow-repeat me-1"></i> Try Again
+    </a>
+</div>
+{% endblock %}

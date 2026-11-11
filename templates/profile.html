@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}My Profile{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+    <div>
+        <h2 class="page-title"><i class="bi bi-person-circle me-2 text-primary"></i>My Profile</h2>
+        <p class="page-subtitle">Manage your personal information and account security</p>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-4">
+        <div class="card p-4 text-center">
+            <div class="mx-auto mb-3 sidebar-user-avatar" style="width: 80px; height: 80px; font-size: 2rem;">
+                {{ user.name[0] | upper }}
+            </div>
+            <h4 class="fw-bold mb-1">{{ user.name }}</h4>
+            <p class="text-secondary small mb-2">{{ user.email }}</p>
+            <div>
+                <span class="badge {% if user.role == 'admin' %}bg-danger{% elif user.role == 'staff' %}bg-info text-dark{% else %}bg-primary{% endif %} px-3 py-1">
+                    {{ user.role | upper }}
+                </span>
+            </div>
+
+            <hr class="my-4">
+
+            <div class="text-start small">
+                <div class="mb-2">
+                    <span class="text-secondary d-block">Roll Number / ID:</span>
+                    <strong>{{ user.roll_number or 'Not provided' }}</strong>
+                </div>
+                <div class="mb-2">
+                    <span class="text-secondary d-block">Department:</span>
+                    <strong>{{ user.department or 'General' }}</strong>
+                </div>
+                <div class="mb-2">
+                    <span class="text-secondary d-block">Contact Phone:</span>
+                    <strong>{{ user.phone or 'Not provided' }}</strong>
+                </div>
+                <div>
+                    <span class="text-secondary d-block">Account Created:</span>
+                    <strong>{{ user.created_at.strftime('%b %d, %Y') }}</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+        <div class="card p-4">
+            <h5 class="fw-bold mb-3"><i class="bi bi-pencil-square me-2 text-primary"></i>Edit Information</h5>
+            
+            <form method="POST" action="{{ url_for('profile') }}">
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label for="name" class="form-label">Full Name</label>
+                        <input type="text" class="form-control" id="name" name="name" value="{{ user.name }}" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="email_static" class="form-label">Email Address (Read-only)</label>
+                        <input type="email" class="form-control bg-light" id="email_static" value="{{ user.email }}" readonly>
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <label for="department" class="form-label">Department / Branch</label>
+                        <input type="text" class="form-control" id="department" name="department" value="{{ user.department or '' }}">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="phone" class="form-label">Phone Number</label>
+                        <input type="tel" class="form-control" id="phone" name="phone" value="{{ user.phone or '' }}">
+                    </div>
+                </div>
+
+                <h5 class="fw-bold mb-3 border-top pt-3"><i class="bi bi-shield-lock me-2 text-primary"></i>Security & Password</h5>
+                <p class="text-secondary small mb-3">Leave blank if you do not wish to change your password.</p>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <label for="current_password" class="form-label">Current Password</label>
+                        <input type="password" class="form-control" id="current_password" name="current_password" placeholder="Enter current password">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="new_password" class="form-label">New Password (Min 6 chars)</label>
+                        <input type="password" class="form-control" id="new_password" name="new_password" placeholder="Enter new password">
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end">
+                    <button type="submit" class="btn btn-primary px-4">
+                        <i class="bi bi-check2-circle me-1"></i> Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
